@@ -93,7 +93,7 @@ export default function ProfilePage() {
       const data = await res.json();
       setVerifyMessage(data.message);
       setDomainVerified(!!data.verified);
-    } catch (e) {
+    } catch {
       setVerifyMessage('Errore durante la verifica DNS');
     } finally {
       setVerifying(false);
@@ -181,7 +181,7 @@ export default function ProfilePage() {
                     <ol className="list-decimal list-inside text-sm text-gray-700 mb-2" start={2}>
                       <li>Aggiungi un record <b>CNAME</b> che punti a <b>link-manager-psi.vercel.app</b> (o il tuo dominio Vercel).</li>
                       <li>Attendi la propagazione DNS (può richiedere alcuni minuti).</li>
-                      <li>Clicca su "Verifica dominio" qui sotto.</li>
+                      <li>Clicca su &quot;Verifica dominio&quot; qui sotto.</li>
                     </ol>
                     <div className="flex items-center space-x-3 mt-2">
                       <button

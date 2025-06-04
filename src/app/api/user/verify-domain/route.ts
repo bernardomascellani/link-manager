@@ -27,7 +27,7 @@ export async function GET() {
     try {
       const records = await dns.resolveTxt(txtName);
       verified = records.some(arr => arr.includes(user.domainVerificationToken));
-    } catch (e) {
+    } catch {
       verified = false;
     }
 
