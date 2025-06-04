@@ -1,5 +1,11 @@
 import mongoose from 'mongoose';
 
+declare global {
+    // eslint-disable-next-line no-var
+    var mongoose: { conn: any; promise: any } | undefined;
+  }
+  
+
 const MONGODB_URI = 'mongodb+srv://bernardomascellani:nfXb9GeIbJ0Daj5u@link-manager-cluster.9mhkndm.mongodb.net/';
 
 if (!MONGODB_URI) {
