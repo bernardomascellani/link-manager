@@ -224,7 +224,7 @@ export default function ProfilePage() {
                   <div className="mt-4 p-4 bg-yellow-50 border border-yellow-300 rounded">
                     <span className="text-yellow-700 font-semibold">⏳ Dominio in attesa di verifica</span>
                     <p className="text-sm text-yellow-700 mt-2">
-                      Dopo aver aggiunto i record DNS, clicca su "Verifica dominio". La propagazione DNS può richiedere alcuni minuti.<br />
+                      Dopo aver aggiunto i record DNS, clicca su &quot;Verifica dominio&quot;. La propagazione DNS può richiedere alcuni minuti.<br />
                       Finché il dominio non è verificato, non potrai generare nuovi link.
                     </p>
                   </div>
