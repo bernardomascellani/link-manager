@@ -6,13 +6,13 @@ declare global {
   var mongoose: { conn: any; promise: any } | undefined;
 }
 
-const MONGODB_URI = 'mongodb+srv://bernardomascellani:nfXb9GeIbJ0Daj5u@link-manager-cluster.9mhkndm.mongodb.net/';
+const MONGODB_URI = process.env.MONGODB_URI!;
 
 if (!MONGODB_URI) {
   throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
 }
 
-let cached = global.mongoose;
+let cached: { conn: any; promise: any } = global.mongoose!;
 
 if (!cached) {
   cached = global.mongoose = { conn: null, promise: null };
