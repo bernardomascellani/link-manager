@@ -66,10 +66,15 @@ export async function PUT(req: Request) {
     }
     // Assicuro che baseUrl termini con una sola barra
     const cleanBaseUrl = baseUrl.replace(/\/+$/, '') + '/';
+    // Genero un token di verifica
+    const verificationToken = 'verify-' + Math.random().toString(36).substring(2, 12);
     user.baseUrl = cleanBaseUrl;
+    user.domainVerificationToken = verificationToken;
+    user.domainVerified = false;
     try {
       await user.save();
       console.log('BaseUrl salvato per utente:', user.email, '->', user.baseUrl);
+      console.log('Token di verifica generato:', verificationToken);
     } catch (err) {
       console.error('Errore durante il salvataggio:', err);
     }

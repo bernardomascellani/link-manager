@@ -11,6 +11,10 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [verificationToken, setVerificationToken] = useState('');
+  const [domainVerified, setDomainVerified] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [verifyMessage, setVerifyMessage] = useState('');
 
   useEffect(() => {
     console.log('Session status:', status);
@@ -39,6 +43,12 @@ export default function ProfilePage() {
       const data = await res.json();
       if (data.baseUrl) {
         setBaseUrl(data.baseUrl);
+      }
+      if (data.domainVerificationToken) {
+        setVerificationToken(data.domainVerificationToken);
+      }
+      if (typeof data.domainVerified === 'boolean') {
+        setDomainVerified(data.domainVerified);
       }
     } catch (error) {
       console.error('Errore nel recupero dei dati utente:', error);
@@ -72,6 +82,21 @@ export default function ProfilePage() {
     } catch (error) {
       console.error('Errore durante l\'aggiornamento:', error);
       setError(error instanceof Error ? error.message : 'Errore durante l\'aggiornamento dell\'URL base');
+    }
+  };
+
+  const handleVerifyDomain = async () => {
+    setVerifying(true);
+    setVerifyMessage('');
+    try {
+      const res = await fetch('/api/user/verify-domain', { credentials: 'include' });
+      const data = await res.json();
+      setVerifyMessage(data.message);
+      setDomainVerified(!!data.verified);
+    } catch (e) {
+      setVerifyMessage('Errore durante la verifica DNS');
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -143,6 +168,40 @@ export default function ProfilePage() {
                 >
                   {baseUrl ? 'Modifica URL base' : 'Imposta URL base'}
                 </button>
+                {baseUrl && verificationToken && (
+                  <div className="mt-6 p-4 bg-gray-50 border rounded">
+                    <h3 className="font-semibold mb-2">Verifica dominio</h3>
+                    <ol className="list-decimal list-inside text-sm text-gray-700 mb-2">
+                      <li>Aggiungi un record <b>TXT</b> al DNS del dominio <b>{new URL(baseUrl).hostname}</b>:</li>
+                    </ol>
+                    <div className="mb-2">
+                      <span className="font-mono text-xs bg-gray-200 px-2 py-1 rounded">Nome: _linkmanager-verifica</span><br />
+                      <span className="font-mono text-xs bg-gray-200 px-2 py-1 rounded">Valore: {verificationToken}</span>
+                    </div>
+                    <ol className="list-decimal list-inside text-sm text-gray-700 mb-2" start={2}>
+                      <li>Aggiungi un record <b>CNAME</b> che punti a <b>link-manager-psi.vercel.app</b> (o il tuo dominio Vercel).</li>
+                      <li>Attendi la propagazione DNS (può richiedere alcuni minuti).</li>
+                      <li>Clicca su "Verifica dominio" qui sotto.</li>
+                    </ol>
+                    <div className="flex items-center space-x-3 mt-2">
+                      <button
+                        onClick={handleVerifyDomain}
+                        disabled={verifying}
+                        className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                      >
+                        {verifying ? 'Verifica in corso...' : 'Verifica dominio'}
+                      </button>
+                      {domainVerified ? (
+                        <span className="text-green-600 font-semibold">Dominio verificato!</span>
+                      ) : (
+                        <span className="text-yellow-600 font-semibold">Dominio non verificato</span>
+                      )}
+                    </div>
+                    {verifyMessage && (
+                      <div className="mt-2 text-sm text-gray-700">{verifyMessage}</div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
