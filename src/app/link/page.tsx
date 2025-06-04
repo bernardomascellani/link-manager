@@ -14,7 +14,6 @@ export default function LinkPage() {
   const [generatedLinks, setGeneratedLinks] = useState<Array<{ original: string; short: string }>>([]);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [allLinks, setAllLinks] = useState<Array<{ originalUrl: string; shortCode: string; createdAt: string }>>([]);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -41,9 +40,7 @@ export default function LinkPage() {
       if (data.baseUrl) {
         setBaseUrl(data.baseUrl);
       }
-    } catch (error) {
-      console.error('Errore nel recupero dei dati utente:', error);
-    }
+    } catch {/* errore ignorato */}
   };
 
   const fetchAllLinks = async () => {
@@ -52,24 +49,19 @@ export default function LinkPage() {
       if (!res.ok) return;
       const data = await res.json();
       setAllLinks(data.links || []);
-    } catch (err) {
-      // Puoi aggiungere gestione errori qui
-    }
+    } catch {/* errore ignorato */}
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setSuccess('');
 
     if (!baseUrl) {
-      setError('Devi prima impostare un URL base nel tuo profilo');
       return;
     }
 
     const urlList = urls.split('\n').filter(url => url.trim());
     if (urlList.length === 0) {
-      setError('Inserisci almeno un URL');
       return;
     }
 
@@ -91,13 +83,8 @@ export default function LinkPage() {
         setSuccess('Link generati con successo!');
         setUrls('');
         setCustomCode('');
-      } else {
-        const data = await res.json();
-        setError(data.message || 'Errore durante la generazione dei link');
       }
-    } catch (error) {
-      setError('Errore durante la generazione dei link');
-    }
+    } catch {/* errore ignorato */}
   };
 
   const copyToClipboard = async (text: string, index: number) => {
@@ -105,9 +92,7 @@ export default function LinkPage() {
       await navigator.clipboard.writeText(text);
       setCopiedIndex(index);
       setTimeout(() => setCopiedIndex(null), 2000);
-    } catch (err) {
-      console.error('Errore durante la copia:', err);
-    }
+    } catch {/* errore ignorato */}
   };
 
   if (status === 'loading') {
@@ -166,12 +151,6 @@ export default function LinkPage() {
               placeholder="Lascia vuoto per generare un codice casuale"
             />
           </div>
-
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
 
           {success && (
             <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
