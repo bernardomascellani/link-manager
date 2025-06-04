@@ -65,7 +65,7 @@ export async function PUT(req: Request) {
       );
     }
     // Assicuro che baseUrl termini con una sola barra
-    let cleanBaseUrl = baseUrl.replace(/\/+$/, '') + '/';
+    const cleanBaseUrl = baseUrl.replace(/\/+$/, '') + '/';
     user.baseUrl = cleanBaseUrl;
     try {
       await user.save();
