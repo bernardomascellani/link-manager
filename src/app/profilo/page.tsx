@@ -99,6 +99,16 @@ export default function ProfilePage() {
     }
   };
 
+  // Polling automatico per la verifica dominio ogni 30 secondi se non verificato
+  useEffect(() => {
+    if (!domainVerified && baseUrl && verificationToken) {
+      const interval = setInterval(() => {
+        handleVerifyDomain();
+      }, 30000); // 30 secondi
+      return () => clearInterval(interval);
+    }
+  }, [domainVerified, baseUrl, verificationToken]);
+
   if (status === 'loading') {
     return <div>Caricamento...</div>;
   }
@@ -185,20 +195,38 @@ export default function ProfilePage() {
                     <div className="flex items-center space-x-3 mt-2">
                       <button
                         onClick={handleVerifyDomain}
-                        disabled={verifying}
+                        disabled={verifying || domainVerified}
                         className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                       >
-                        {verifying ? 'Verifica in corso...' : 'Verifica dominio'}
+                        {verifying ? 'Verifica in corso...' : domainVerified ? 'Dominio verificato' : 'Verifica dominio'}
                       </button>
                       {domainVerified ? (
-                        <span className="text-green-600 font-semibold">Dominio verificato!</span>
+                        <span className="text-green-600 font-semibold">✅ Dominio verificato e operativo!</span>
                       ) : (
-                        <span className="text-yellow-600 font-semibold">Dominio non verificato</span>
+                        <span className="text-yellow-600 font-semibold">⏳ Dominio in attesa di verifica</span>
                       )}
                     </div>
                     {verifyMessage && (
-                      <div className="mt-2 text-sm text-gray-700">{verifyMessage}</div>
+                      <div className={`mt-2 text-sm ${domainVerified ? 'text-green-700' : 'text-yellow-700'}`}>{verifyMessage}</div>
                     )}
+                  </div>
+                )}
+                {/* Messaggio stato dominio custom */}
+                {baseUrl && verificationToken && domainVerified && (
+                  <div className="mt-4 p-4 bg-green-50 border border-green-300 rounded">
+                    <span className="text-green-700 font-semibold">✅ Dominio verificato e operativo!</span>
+                    <p className="text-sm text-green-700 mt-2">
+                      Ora puoi usare il tuo dominio custom per i link generati.
+                    </p>
+                  </div>
+                )}
+                {baseUrl && verificationToken && !domainVerified && (
+                  <div className="mt-4 p-4 bg-yellow-50 border border-yellow-300 rounded">
+                    <span className="text-yellow-700 font-semibold">⏳ Dominio in attesa di verifica</span>
+                    <p className="text-sm text-yellow-700 mt-2">
+                      Dopo aver aggiunto i record DNS, clicca su "Verifica dominio". La propagazione DNS può richiedere alcuni minuti.<br />
+                      Finché il dominio non è verificato, non potrai generare nuovi link.
+                    </p>
                   </div>
                 )}
               </div>
