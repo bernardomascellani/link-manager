@@ -18,17 +18,32 @@ export async function GET() {
       return NextResponse.json({ message: 'Dominio o token non impostato' }, { status: 400 });
     }
 
-    // Estraggo il dominio dal baseUrl
+    // Estraggo il dominio principale dal baseUrl
     const url = new URL(user.baseUrl);
-    const domain = url.hostname;
-    const txtName = `_linkmanager-verifica.${domain}`;
+    const hostname = url.hostname;
+    const domainParts = hostname.split('.');
+    const mainDomain = domainParts.length > 2 
+      ? domainParts.slice(-2).join('.')  // Prende gli ultimi due parti (es. brnd.ooo)
+      : hostname;                        // Se non ci sono sottodomini, usa l'hostname completo
+    
+    const txtName = `_linkmanager-verifica.${mainDomain}`;
+    console.log('Verifica DNS per:', txtName);
+    console.log('Token da verificare:', user.domainVerificationToken);
 
     let verified = false;
     try {
       const records = await dns.resolveTxt(txtName);
-      verified = records.some(arr => arr.includes(user.domainVerificationToken));
-    } catch {
-      console.error('Errore nella verifica DNS');
+      console.log('Record TXT trovati:', records);
+      
+      verified = records.some(arr => {
+        const found = arr.includes(user.domainVerificationToken);
+        console.log('Confronto record:', arr, 'con token:', user.domainVerificationToken, 'risultato:', found);
+        return found;
+      });
+      
+      console.log('Verifica finale:', verified);
+    } catch (err) {
+      console.error('Errore nella verifica DNS:', err);
       return NextResponse.json({ message: 'Errore nella verifica DNS' }, { status: 500 });
     }
 
@@ -41,8 +56,8 @@ export async function GET() {
       await user.save();
       return NextResponse.json({ verified: false, message: 'Record TXT non trovato o non valido.' });
     }
-  } catch (error) {
-    console.error('Errore nella verifica DNS:', error);
+  } catch (err) {
+    console.error('Errore nella verifica DNS:', err);
     return NextResponse.json({ message: 'Errore nella verifica DNS' }, { status: 500 });
   }
 } 

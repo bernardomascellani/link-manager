@@ -18,7 +18,7 @@ export async function GET() {
 
     await connectDB();
     const user = await User.findOne({ email: session.user.email });
-    console.log('Utente trovato:', user);
+    
 
     if (!user) {
       return NextResponse.json(
@@ -31,6 +31,8 @@ export async function GET() {
       name: user.name,
       email: user.email,
       baseUrl: user.baseUrl,
+      domainVerificationToken: user.domainVerificationToken,
+      domainVerified: user.domainVerified,
     });
   } catch {
     console.error('Errore nel recupero del profilo');
@@ -64,17 +66,26 @@ export async function PUT(req: Request) {
         { status: 404 }
       );
     }
-    // Assicuro che baseUrl termini con una sola barra
-    const cleanBaseUrl = baseUrl.replace(/\/+$/, '') + '/';
-    // Genero un token di verifica
-    const verificationToken = 'verify-' + Math.random().toString(36).substring(2, 12);
-    user.baseUrl = cleanBaseUrl;
-    user.domainVerificationToken = verificationToken;
-    user.domainVerified = false;
+    // Se baseUrl è vuoto, azzero anche il token e la verifica
+    if (!baseUrl) {
+      user.baseUrl = '';
+      user.domainVerificationToken = '';
+      user.domainVerified = false;
+    } else {
+      // Assicuro che baseUrl termini con una sola barra
+      const cleanBaseUrl = baseUrl.replace(/\/+$/, '') + '/';
+      // Genero un token di verifica
+      const verificationToken = 'verify-' + Math.random().toString(36).substring(2, 12);
+      user.baseUrl = cleanBaseUrl;
+      user.domainVerificationToken = verificationToken;
+      user.domainVerified = false;
+    }
     try {
       await user.save();
       console.log('BaseUrl salvato per utente:', user.email, '->', user.baseUrl);
-      console.log('Token di verifica generato:', verificationToken);
+      if (user.domainVerificationToken) {
+        console.log('Token di verifica generato:', user.domainVerificationToken);
+      }
     } catch {
       console.error('Errore durante il salvataggio');
     }
