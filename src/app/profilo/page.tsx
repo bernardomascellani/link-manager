@@ -50,9 +50,9 @@ export default function ProfilePage() {
       if (typeof data.domainVerified === 'boolean') {
         setDomainVerified(data.domainVerified);
       }
-    } catch (error) {
-      console.error('Errore nel recupero dei dati utente:', error);
-      setError(error instanceof Error ? error.message : 'Errore nel recupero dei dati utente');
+    } catch {
+      console.error('Errore nel recupero dei dati utente');
+      setError('Errore nel recupero dei dati utente');
     }
   };
 
@@ -79,9 +79,8 @@ export default function ProfilePage() {
       const data = await res.json();
       setSuccess(data.message || 'URL base aggiornato con successo!');
       setIsEditing(false);
-    } catch (error) {
-      console.error('Errore durante l\'aggiornamento:', error);
-      setError(error instanceof Error ? error.message : 'Errore durante l\'aggiornamento dell\'URL base');
+    } catch {
+      setError('Errore durante l\'aggiornamento dell\'URL base');
     }
   };
 

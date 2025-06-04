@@ -23,8 +23,8 @@ export async function GET() {
       .select('originalUrl shortCode createdAt -_id');
 
     return NextResponse.json({ links });
-  } catch (error) {
-    console.error('Errore nel recupero dei link:', error);
+  } catch {
+    console.error('Errore nel recupero dei link');
     return NextResponse.json({ message: 'Errore nel recupero dei link' }, { status: 500 });
   }
 } 

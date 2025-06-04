@@ -32,8 +32,8 @@ export async function GET() {
       email: user.email,
       baseUrl: user.baseUrl,
     });
-  } catch (error) {
-    console.error('Errore nel recupero del profilo:', error);
+  } catch {
+    console.error('Errore nel recupero del profilo');
     return NextResponse.json(
       { message: 'Errore nel recupero del profilo' },
       { status: 500 }
@@ -75,16 +75,16 @@ export async function PUT(req: Request) {
       await user.save();
       console.log('BaseUrl salvato per utente:', user.email, '->', user.baseUrl);
       console.log('Token di verifica generato:', verificationToken);
-    } catch (err) {
-      console.error('Errore durante il salvataggio:', err);
+    } catch {
+      console.error('Errore durante il salvataggio');
     }
 
     return NextResponse.json({
       message: 'Profilo aggiornato con successo',
       baseUrl: user.baseUrl,
     });
-  } catch (error) {
-    console.error('Errore nell\'aggiornamento del profilo:', error);
+  } catch {
+    console.error('Errore nell\'aggiornamento del profilo');
     return NextResponse.json(
       { message: 'Errore nell\'aggiornamento del profilo' },
       { status: 500 }

@@ -77,8 +77,8 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ links: generatedLinks });
-  } catch (error) {
-    console.error('Errore nella generazione dei link:', error);
+  } catch {
+    console.error('Errore nella generazione dei link');
     return NextResponse.json(
       { message: 'Errore nella generazione dei link' },
       { status: 500 }

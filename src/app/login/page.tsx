@@ -32,7 +32,7 @@ export default function LoginPage() {
       } else {
         router.push('/link');
       }
-    } catch (error) {
+    } catch {
       // setError('Si è verificato un errore durante il login');
     }
   };

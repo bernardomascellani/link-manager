@@ -40,7 +40,7 @@ export default function RegisterPage() {
         const data = await res.json();
         console.error(data.message || 'Si è verificato un errore durante la registrazione');
       }
-    } catch (error) {
+    } catch {
       console.error('Si è verificato un errore durante la registrazione');
     }
   };

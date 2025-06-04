@@ -28,7 +28,8 @@ export async function GET() {
       const records = await dns.resolveTxt(txtName);
       verified = records.some(arr => arr.includes(user.domainVerificationToken));
     } catch {
-      verified = false;
+      console.error('Errore nella verifica DNS');
+      return NextResponse.json({ message: 'Errore nella verifica DNS' }, { status: 500 });
     }
 
     if (verified) {

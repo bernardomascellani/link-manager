@@ -35,9 +35,9 @@ async function connectDB() {
 
   try {
     cached.conn = await cached.promise;
-  } catch (e) {
+  } catch {
     cached.promise = null;
-    throw e;
+    throw new Error('Errore nella connessione a MongoDB');
   }
 
   return cached.conn;

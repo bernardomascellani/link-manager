@@ -32,8 +32,8 @@ export async function POST(req: Request) {
       { message: 'Utente registrato con successo' },
       { status: 201 }
     );
-  } catch (error) {
-    console.error('Errore durante la registrazione:', error);
+  } catch {
+    console.error('Errore durante la registrazione');
     return NextResponse.json(
       { message: 'Errore durante la registrazione' },
       { status: 500 }
