@@ -64,9 +64,15 @@ export async function PUT(req: Request) {
         { status: 404 }
       );
     }
-    user.baseUrl = baseUrl;
-    await user.save();
-    console.log('BaseUrl salvato per utente:', user.email, '->', user.baseUrl);
+    // Assicuro che baseUrl termini con una sola barra
+    let cleanBaseUrl = baseUrl.replace(/\/+$/, '') + '/';
+    user.baseUrl = cleanBaseUrl;
+    try {
+      await user.save();
+      console.log('BaseUrl salvato per utente:', user.email, '->', user.baseUrl);
+    } catch (err) {
+      console.error('Errore durante il salvataggio:', err);
+    }
 
     return NextResponse.json({
       message: 'Profilo aggiornato con successo',
