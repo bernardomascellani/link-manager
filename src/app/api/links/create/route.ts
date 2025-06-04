@@ -64,7 +64,7 @@ export async function POST(req: Request) {
       }
 
       // Crea il nuovo link
-      const link = await Link.create({
+      await Link.create({
         userId: user._id,
         originalUrl: url,
         shortCode,

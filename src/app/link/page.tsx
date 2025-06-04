@@ -10,11 +10,11 @@ export default function LinkPage() {
   const [urls, setUrls] = useState('');
   const [customCode, setCustomCode] = useState('');
   const [baseUrl, setBaseUrl] = useState('');
-  const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [generatedLinks, setGeneratedLinks] = useState<Array<{ original: string; short: string }>>([]);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [allLinks, setAllLinks] = useState<Array<{ originalUrl: string; shortCode: string; createdAt: string }>>([]);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -55,15 +55,6 @@ export default function LinkPage() {
     } catch (err) {
       // Puoi aggiungere gestione errori qui
     }
-  };
-
-  const generateRandomCode = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < 6; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

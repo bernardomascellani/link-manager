@@ -57,7 +57,7 @@ export async function PUT(req: Request) {
     console.log('BaseUrl ricevuto:', baseUrl);
 
     await connectDB();
-    let user = await User.findOne({ email: session.user.email });
+    const user = await User.findOne({ email: session.user.email });
     if (!user) {
       return NextResponse.json(
         { message: 'Utente non trovato' },
