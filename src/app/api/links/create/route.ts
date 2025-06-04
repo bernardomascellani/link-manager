@@ -72,7 +72,7 @@ export async function POST(req: Request) {
 
       generatedLinks.push({
         original: url,
-        short: `${user.baseUrl}/${shortCode}`,
+        short: `${user.baseUrl.replace(/\/+$/, '')}/${shortCode}`,
       });
     }
 
