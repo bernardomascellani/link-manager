@@ -9,11 +9,11 @@ export const dynamic = 'force-dynamic';
 export default async function RedirectPage({
   params,
 }: {
-  params: { slug?: string[] };
+  params: { slug: string };
 }) {
   const headersList = await headers();
   const host = headersList.get('host') || '';
-  const shortCode = params.slug?.[0] || '';
+  const shortCode = params.slug;
 
   // Se il dominio è platform.brnd.ooo, non facciamo nulla
   if (host === 'platform.brnd.ooo') {
