@@ -6,16 +6,12 @@ import Link from '@/models/Link';
 
 export const dynamic = 'force-dynamic';
 
-interface PageProps {
-  params: {
-    slug: string;
-  };
+type Props = {
+  params: { slug: string };
   searchParams: { [key: string]: string | string[] | undefined };
-}
+};
 
-export default async function RedirectPage({
-  params,
-}: PageProps) {
+export default async function RedirectPage({ params }: Props) {
   const headersList = await headers();
   const host = headersList.get('host') || '';
   const shortCode = params.slug;
