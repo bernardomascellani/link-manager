@@ -6,15 +6,15 @@ import Link from '@/models/Link';
 
 export const dynamic = 'force-dynamic';
 
-type Props = {
-  params: { slug: string };
-  searchParams: { [key: string]: string | string[] | undefined };
-};
-
-export default async function RedirectPage({ params }: Props) {
+export default async function RedirectPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const resolvedParams = await params;
   const headersList = await headers();
   const host = headersList.get('host') || '';
-  const shortCode = params.slug;
+  const shortCode = resolvedParams.slug;
 
   // Se il dominio è platform.brnd.ooo, non facciamo nulla
   if (host === 'platform.brnd.ooo') {
