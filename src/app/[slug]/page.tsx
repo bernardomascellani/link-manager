@@ -6,28 +6,34 @@ import Link from '@/models/Link';
 
 export const dynamic = 'force-dynamic';
 
-export default async function RedirectPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const resolvedParams = await params;
+export default async function RedirectPage({ params }: { params: { slug: string } }) {
   const headersList = await headers();
   const host = headersList.get('host') || '';
-  const shortCode = resolvedParams.slug;
+  const shortCode = params.slug;
 
-  // Se il dominio è platform.brnd.ooo, non facciamo nulla
+  // Debug
+  console.log('Host:', host, 'ShortCode:', shortCode);
+
   if (host === 'platform.brnd.ooo') {
     return null;
   }
 
   await connectDB();
 
-  // Cerca utente con baseUrl corrispondente e dominio verificato
+  // Normalizza baseUrl
+  const possibleBaseUrls = [
+    `https://${host}/`,
+    `http://${host}/`,
+    `https://${host}`,
+    `http://${host}`,
+  ];
+
   const user = await User.findOne({
-    baseUrl: { $in: [`https://${host}/`, `http://${host}/`] },
+    baseUrl: { $in: possibleBaseUrls },
     domainVerified: true,
   });
+
+  console.log('User trovato:', user);
 
   if (!user) {
     return (
@@ -40,15 +46,15 @@ export default async function RedirectPage({
     );
   }
 
-  // Cerca link per quello user e shortcode
   const link = await Link.findOne({
     userId: user._id,
     shortCode,
   });
 
+  console.log('Link trovato:', link);
+
   if (link) {
-    // Redirect verso il longUrl
-    redirect(link.longUrl);
+    redirect(link.originalUrl);
   }
 
   return (
