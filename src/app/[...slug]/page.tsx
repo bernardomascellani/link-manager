@@ -6,14 +6,13 @@ import Link from '@/models/Link';
 
 export const dynamic = 'force-dynamic';
 
-export default async function RedirectPage({
-  params,
-}: {
-  params: { slug?: string[] };
-}) {
+export default async function RedirectPage(props: any) {
+  const params = props.params || {};
+  const slugArr = params.slug || [];
+  const shortCode = Array.isArray(slugArr) ? slugArr[0] : slugArr;
+
   const headersList = await headers();
   const host = headersList.get('host') || '';
-  const shortCode = params.slug?.[0] || '';
 
   // Debug
   console.log('Host:', host, 'ShortCode:', shortCode);
