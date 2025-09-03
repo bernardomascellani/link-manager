@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Domain from '@/models/Domain';
 import { promises as dns } from 'dns';
+import { vercelApi } from '@/lib/vercel-api';
 
 export async function POST(request: NextRequest) {
   try {
@@ -70,11 +71,31 @@ export async function POST(request: NextRequest) {
         domain.verifiedAt = new Date();
         await domain.save();
 
+        // Aggiungi automaticamente il dominio a Vercel se configurato
+        let vercelMessage = '';
+        if (vercelApi.isConfigured()) {
+          try {
+            const vercelResponse = await vercelApi.addDomain(domain.domain);
+            domain.vercelDomainId = vercelResponse.id;
+            domain.vercelStatus = vercelResponse.status;
+            domain.vercelError = null;
+            await domain.save();
+            vercelMessage = ' e aggiunto a Vercel';
+          } catch (vercelError: any) {
+            console.error('Error adding domain to Vercel:', vercelError);
+            domain.vercelStatus = 'error';
+            domain.vercelError = vercelError.message;
+            await domain.save();
+            vercelMessage = ' (errore nell\'aggiunta a Vercel)';
+          }
+        }
+
         return NextResponse.json(
           { 
-            message: 'Dominio verificato e attivato con successo!',
+            message: `Dominio verificato e attivato con successo${vercelMessage}!`,
             verified: true,
-            active: true
+            active: true,
+            vercelStatus: domain.vercelStatus
           },
           { status: 200 }
         );

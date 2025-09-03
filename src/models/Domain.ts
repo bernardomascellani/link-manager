@@ -29,6 +29,20 @@ const domainSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  // Vercel integration fields
+  vercelDomainId: {
+    type: String,
+    default: null,
+  },
+  vercelStatus: {
+    type: String,
+    enum: ['pending', 'verified', 'error', 'removed'],
+    default: 'pending',
+  },
+  vercelError: {
+    type: String,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
