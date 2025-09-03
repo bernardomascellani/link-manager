@@ -121,7 +121,12 @@ export default async function RedirectPage({ params }: RedirectPageProps) {
     // Reindirizza all'URL selezionato
     redirect(selectedUrl.url);
 
-  } catch (error) {
+  } catch (error: any) {
+    // Se è un errore di reindirizzamento di Next.js, rilancialo
+    if (error?.digest?.startsWith('NEXT_REDIRECT')) {
+      throw error;
+    }
+    
     console.error('Redirect error:', error);
     
     return (
