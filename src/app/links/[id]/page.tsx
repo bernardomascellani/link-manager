@@ -1,9 +1,31 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+// Registra i componenti di Chart.js
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 interface AnalyticsData {
   link: {
@@ -37,13 +59,16 @@ interface AnalyticsData {
   };
 }
 
-export default function LinkAnalyticsPage({ params }: { params: { id: string } }) {
+export default function LinkAnalyticsPage({ params }: { params: Promise<{ id: string }> }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState(30);
+
+  // Unwrap params
+  const { id } = use(params);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -52,12 +77,12 @@ export default function LinkAnalyticsPage({ params }: { params: { id: string } }
       return;
     }
     fetchAnalytics();
-  }, [session, status, selectedPeriod]);
+  }, [session, status, selectedPeriod, id]);
 
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/links/${params.id}/analytics?days=${selectedPeriod}`);
+      const response = await fetch(`/api/links/${id}/analytics?days=${selectedPeriod}`);
       
       if (!response.ok) {
         throw new Error('Errore nel caricamento dei dati');
@@ -87,6 +112,122 @@ export default function LinkAnalyticsPage({ params }: { params: { id: string } }
     if (userAgent.includes('Safari')) return 'Safari';
     if (userAgent.includes('Edge')) return 'Edge';
     return 'Altro';
+  };
+
+  // Prepara i dati per il grafico
+  const prepareChartData = () => {
+    if (!analytics?.analytics.clicksByDay) return null;
+
+    const sortedDates = Object.keys(analytics.analytics.clicksByDay).sort();
+    const labels = sortedDates.map(date => {
+      const d = new Date(date);
+      return d.toLocaleDateString('it-IT', { 
+        day: '2-digit', 
+        month: '2-digit' 
+      });
+    });
+    
+    const data = sortedDates.map(date => analytics.analytics.clicksByDay[date]);
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Click',
+          data: data,
+          borderColor: 'rgb(99, 102, 241)',
+          backgroundColor: (context: any) => {
+            const chart = context.chart;
+            const { ctx, chartArea } = chart;
+            if (!chartArea) {
+              return 'rgba(99, 102, 241, 0.1)';
+            }
+            const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+            gradient.addColorStop(0, 'rgba(99, 102, 241, 0.05)');
+            gradient.addColorStop(1, 'rgba(99, 102, 241, 0.2)');
+            return gradient;
+          },
+          tension: 0.4,
+          fill: true,
+        },
+      ],
+    };
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      title: {
+        display: false,
+      },
+      tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        titleColor: 'white',
+        bodyColor: 'white',
+        borderColor: 'rgba(99, 102, 241, 0.5)',
+        borderWidth: 1,
+        cornerRadius: 8,
+        displayColors: false,
+        callbacks: {
+          title: (context: any) => {
+            return `Data: ${context[0].label}`;
+          },
+          label: (context: any) => {
+            return `${context.parsed.y} click`;
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          color: '#6B7280',
+          font: {
+            size: 12,
+          },
+        },
+        border: {
+          display: false,
+        },
+      },
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(107, 114, 128, 0.1)',
+          borderDash: [5, 5],
+        },
+        ticks: {
+          color: '#6B7280',
+          font: {
+            size: 12,
+          },
+          stepSize: 1,
+        },
+        border: {
+          display: false,
+        },
+      },
+    },
+    elements: {
+      point: {
+        radius: 4,
+        hoverRadius: 6,
+        backgroundColor: 'rgb(99, 102, 241)',
+        borderColor: 'white',
+        borderWidth: 2,
+      },
+      line: {
+        tension: 0.4,
+        borderWidth: 3,
+      },
+    },
   };
 
   if (status === 'loading' || loading) {
@@ -143,15 +284,21 @@ export default function LinkAnalyticsPage({ params }: { params: { id: string } }
               </p>
             </div>
             <div className="flex items-center space-x-4">
-              <select
-                value={selectedPeriod}
-                onChange={(e) => setSelectedPeriod(parseInt(e.target.value))}
-                className="border border-gray-300 rounded-md px-3 py-2 text-sm"
-              >
-                <option value={7}>Ultimi 7 giorni</option>
-                <option value={30}>Ultimi 30 giorni</option>
-                <option value={90}>Ultimi 90 giorni</option>
-              </select>
+              <div className="flex items-center space-x-2">
+                <label htmlFor="period-select" className="text-sm font-medium text-gray-700">
+                  Periodo:
+                </label>
+                <select
+                  id="period-select"
+                  value={selectedPeriod}
+                  onChange={(e) => setSelectedPeriod(parseInt(e.target.value))}
+                  className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value={7}>Ultimi 7 giorni</option>
+                  <option value={30}>Ultimi 30 giorni</option>
+                  <option value={90}>Ultimi 90 giorni</option>
+                </select>
+              </div>
               <Link
                 href="/links"
                 className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium"
@@ -225,6 +372,61 @@ export default function LinkAnalyticsPage({ params }: { params: { id: string } }
                       }
                     </dd>
                   </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Grafico e Statistiche */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Grafico Andamento Click */}
+          <div className="bg-white shadow rounded-lg">
+            <div className="px-4 py-5 sm:p-6">
+              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Andamento Click nel Tempo</h3>
+              {prepareChartData() ? (
+                <div className="h-80 w-full">
+                  <Line data={prepareChartData()!} options={chartOptions} />
+                </div>
+              ) : (
+                <div className="h-80 flex items-center justify-center text-gray-500">
+                  Nessun dato disponibile per il grafico
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Statistiche Rapide */}
+          <div className="bg-white shadow rounded-lg">
+            <div className="px-4 py-5 sm:p-6">
+              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Statistiche Rapide</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <span className="text-sm font-medium text-gray-600">Click Totali</span>
+                  <span className="text-lg font-bold text-indigo-600">
+                    {Object.values(analytics.analytics.clicksByDay).reduce((a, b) => a + b, 0)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <span className="text-sm font-medium text-gray-600">Click Oggi</span>
+                  <span className="text-lg font-bold text-green-600">
+                    {analytics.analytics.clicksByDay[new Date().toISOString().split('T')[0]] || 0}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <span className="text-sm font-medium text-gray-600">Media Giornaliera</span>
+                  <span className="text-lg font-bold text-blue-600">
+                    {Object.values(analytics.analytics.clicksByDay).length > 0 
+                      ? Math.round(Object.values(analytics.analytics.clicksByDay).reduce((a, b) => a + b, 0) / Object.values(analytics.analytics.clicksByDay).length)
+                      : 0
+                    }
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <span className="text-sm font-medium text-gray-600">Destinazioni Uniche</span>
+                  <span className="text-lg font-bold text-purple-600">
+                    {analytics.analytics.topTargetUrls.length}
+                  </span>
                 </div>
               </div>
             </div>

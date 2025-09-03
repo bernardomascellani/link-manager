@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-// import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function RegisterPage() {
@@ -14,7 +15,15 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  // const router = useRouter();
+  const router = useRouter();
+  const { data: session, status } = useSession();
+
+  // Redirect se già autenticato
+  useEffect(() => {
+    if (status === 'authenticated' && session) {
+      router.push('/dashboard');
+    }
+  }, [status, session, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -68,6 +77,23 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
+
+  // Mostra loading mentre verifica l'autenticazione
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Verifica autenticazione...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Non mostrare nulla se sta reindirizzando
+  if (status === 'authenticated') {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

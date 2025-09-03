@@ -522,16 +522,26 @@ export default function LinksPage() {
                             </p>
                             <div className="mt-1">
                               {link.targetUrls.map((target, index) => (
-                                <span
-                                  key={index}
-                                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mr-2 ${
-                                    target.isActive 
-                                      ? 'bg-green-100 text-green-800' 
-                                      : 'bg-gray-100 text-gray-800'
-                                  }`}
-                                >
-                                  {target.url} (peso: {target.weight})
-                                </span>
+                                <div key={index} className="inline-flex items-center mr-2 mb-2">
+                                  <span
+                                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                      target.isActive 
+                                        ? 'bg-green-100 text-green-800' 
+                                        : 'bg-gray-100 text-gray-800'
+                                    }`}
+                                  >
+                                    {target.url} (peso: {target.weight})
+                                  </span>
+                                  <button
+                                    onClick={() => window.open(target.url, '_blank')}
+                                    className="ml-1 p-1 text-blue-600 hover:text-blue-800 transition-colors duration-150"
+                                    title="Testa Link"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                  </button>
+                                </div>
                               ))}
                             </div>
                           </div>
