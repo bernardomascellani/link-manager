@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import connectDB from '@/lib/mongodb';
 import Link from '@/models/Link';
 import Domain from '@/models/Domain';
@@ -11,23 +12,32 @@ interface RedirectPageProps {
 
 export default async function RedirectPage({ params }: RedirectPageProps) {
   try {
-    // Estrai il dominio e il percorso dal slug
-    const { slug } = await params;
+    // Ottieni l'header Host per estrarre il dominio
+    const headersList = await headers();
+    const host = headersList.get('host');
     
-    if (!slug || slug.length === 0) {
+    if (!host) {
       redirect('/');
     }
 
-    // Se è solo un dominio (es. brnd.ooo), reindirizza alla home
-    if (slug.length === 1) {
+    // Estrai il dominio dall'header Host (es. d.brnd.ooo)
+    const domain = host.toLowerCase();
+    
+    // Estrai il percorso dal slug
+    const { slug } = await params;
+    const shortPath = slug ? slug.join('/') : '';
+    
+    // Se non c'è un percorso, reindirizza alla home
+    if (!shortPath) {
       redirect('/');
     }
-
-    // Il primo elemento è il dominio, il resto è il percorso
-    const domain = slug[0];
-    const shortPath = slug.slice(1).join('/');
 
     await connectDB();
+
+    console.log('=== REDIRECT DEBUG ===');
+    console.log('Host header:', host);
+    console.log('Domain extracted:', domain);
+    console.log('Short path:', shortPath);
 
     // Trova il dominio nel database
     const domainRecord = await Domain.findOne({ 
@@ -35,8 +45,16 @@ export default async function RedirectPage({ params }: RedirectPageProps) {
       isActive: true 
     });
 
+    console.log('Domain record found:', domainRecord ? 'YES' : 'NO');
+    if (domainRecord) {
+      console.log('Domain ID:', domainRecord._id);
+      console.log('Domain verified:', domainRecord.isVerified);
+      console.log('Domain active:', domainRecord.isActive);
+    }
+
     if (!domainRecord) {
       // Dominio non trovato o non attivo
+      console.log('Domain not found or not active');
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
           <div className="text-center">
@@ -53,8 +71,16 @@ export default async function RedirectPage({ params }: RedirectPageProps) {
       shortPath: shortPath
     });
 
+    console.log('Link found:', link ? 'YES' : 'NO');
+    if (link) {
+      console.log('Link ID:', link._id);
+      console.log('Target URLs count:', link.targetUrls.length);
+      console.log('Total clicks:', link.totalClicks);
+    }
+
     if (!link) {
       // Link non trovato
+      console.log('Link not found for path:', shortPath);
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
           <div className="text-center">
@@ -82,6 +108,9 @@ export default async function RedirectPage({ params }: RedirectPageProps) {
 
     // Implementa la rotazione basata sui pesi
     const selectedUrl = selectUrlByWeight(activeTargetUrls);
+
+    console.log('Selected URL:', selectedUrl.url);
+    console.log('Redirecting to:', selectedUrl.url);
 
     // Aggiorna le statistiche
     await Link.findByIdAndUpdate(link._id, {
