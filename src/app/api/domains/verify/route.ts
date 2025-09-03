@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       );
 
       // Verifica CNAME record
-      const expectedCnameValue = 'linkmanager.vercel.app';
+      const expectedCnameValue = 'link-manager-psi.vercel.app';
       let cnameFound = false;
       
       try {

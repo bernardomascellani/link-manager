@@ -83,7 +83,7 @@ export default function DomainVerificationStatus({ domain, verificationToken, do
       {
         type: 'CNAME',
         name: domain,
-        expectedValue: 'linkmanager.vercel.app',
+        expectedValue: 'link-manager-psi.vercel.app',
         status: 'checking'
       }
     ];
@@ -121,7 +121,7 @@ export default function DomainVerificationStatus({ domain, verificationToken, do
         body: JSON.stringify({
           type: 'CNAME',
           name: domain,
-          expectedValue: 'linkmanager.vercel.app'
+          expectedValue: 'link-manager-psi.vercel.app'
         }),
       });
 
