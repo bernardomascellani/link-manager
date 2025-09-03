@@ -67,7 +67,9 @@ export default function LinksPage() {
 
       if (linksResponse.ok) {
         const linksData = await linksResponse.json();
-        setLinks(linksData.links);
+        // Filtra i link con domini validi
+        const validLinks = linksData.links.filter((link: any) => link.domainId && link.domainId.domain);
+        setLinks(validLinks);
       }
 
       if (domainsResponse.ok) {
@@ -303,10 +305,10 @@ export default function LinksPage() {
                         <div className="flex-1">
                           <div className="flex items-center">
                             <p className="text-sm font-medium text-gray-900">
-                              {link.domainId.domain}/{link.shortPath}
+                              {link.domainId?.domain || 'Dominio non trovato'}/{link.shortPath}
                             </p>
                             <button
-                              onClick={() => copyToClipboard(`https://${link.domainId.domain}/${link.shortPath}`)}
+                              onClick={() => copyToClipboard(`https://${link.domainId?.domain || 'dominio-non-trovato'}/${link.shortPath}`)}
                               className="ml-2 text-gray-400 hover:text-gray-600"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

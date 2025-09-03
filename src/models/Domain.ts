@@ -46,7 +46,6 @@ domainSchema.pre('save', function(next) {
 });
 
 // Index for faster lookups
-domainSchema.index({ domain: 1 });
 domainSchema.index({ userId: 1 });
 
 export default mongoose.models.Domain || mongoose.model('Domain', domainSchema);

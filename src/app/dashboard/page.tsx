@@ -96,7 +96,7 @@ export default function DashboardPage() {
                 Gestisci Domini
               </Link>
               <Link
-                href="/dashboard/links"
+                href="/links"
                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
               >
                 Gestisci Link
@@ -193,7 +193,7 @@ export default function DashboardPage() {
                 <div className="bg-gray-50 px-5 py-3">
                   <div className="text-sm">
                     <Link
-                      href="/dashboard/links"
+                      href="/links"
                       className="font-medium text-green-700 hover:text-green-900"
                     >
                       Vai alla gestione link
