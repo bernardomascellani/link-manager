@@ -358,6 +358,12 @@ export default function LinksPage() {
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
+                          <Link
+                            href={`/links/${link._id}`}
+                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm font-medium"
+                          >
+                            Analytics
+                          </Link>
                           <button
                             onClick={() => handleEdit(link)}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium"

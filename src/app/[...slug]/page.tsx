@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import connectDB from '@/lib/mongodb';
 import Link from '@/models/Link';
 import Domain from '@/models/Domain';
+import Click from '@/models/Click';
 
 interface RedirectPageProps {
   params: Promise<{
@@ -112,7 +113,30 @@ export default async function RedirectPage({ params }: RedirectPageProps) {
     console.log('Selected URL:', selectedUrl.url);
     console.log('Redirecting to:', selectedUrl.url);
 
-    // Aggiorna le statistiche
+    // Ottieni informazioni sulla richiesta per il tracking
+    const userAgent = headersList.get('user-agent') || 'Unknown';
+    const referer = headersList.get('referer') || null;
+    const forwardedFor = headersList.get('x-forwarded-for');
+    const realIp = headersList.get('x-real-ip');
+    const ip = forwardedFor?.split(',')[0] || realIp || 'Unknown';
+
+    // Salva il click nel database
+    try {
+      await Click.create({
+        linkId: link._id,
+        domainId: domainRecord._id,
+        targetUrl: selectedUrl.url,
+        ip: ip,
+        userAgent: userAgent,
+        referer: referer,
+      });
+      console.log('Click saved successfully');
+    } catch (clickError) {
+      console.error('Error saving click:', clickError);
+      // Non bloccare il redirect se il salvataggio del click fallisce
+    }
+
+    // Aggiorna le statistiche del link
     await Link.findByIdAndUpdate(link._id, {
       $inc: { totalClicks: 1 },
       lastUsed: new Date()
