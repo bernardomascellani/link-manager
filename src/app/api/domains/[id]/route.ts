@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Domain from '@/models/Domain';
+import { vercelApi } from '@/lib/vercel-api';
 
 // DELETE - Rimuovi dominio
 export async function DELETE(
@@ -30,8 +31,8 @@ export async function DELETE(
 
     await connectDB();
 
-    // Trova e rimuovi il dominio
-    const domain = await Domain.findOneAndDelete({ 
+    // Trova il dominio prima di eliminarlo
+    const domain = await Domain.findOne({ 
       _id: id, 
       userId: session.user.id 
     });
@@ -43,8 +44,28 @@ export async function DELETE(
       );
     }
 
+    // Rimuovi il dominio da Vercel se è configurato e il dominio è in Vercel
+    let vercelMessage = '';
+    if (vercelApi.isConfigured() && domain.vercelDomainId) {
+      try {
+        await vercelApi.removeDomain(domain.domain);
+        vercelMessage = ' e rimosso da Vercel';
+        console.log(`Domain ${domain.domain} removed from Vercel successfully`);
+      } catch (vercelError: any) {
+        console.error('Error removing domain from Vercel:', vercelError);
+        // Non bloccare l'eliminazione se Vercel fallisce
+        vercelMessage = ' (errore nella rimozione da Vercel)';
+      }
+    }
+
+    // Elimina il dominio dal database
+    await Domain.findOneAndDelete({ 
+      _id: id, 
+      userId: session.user.id 
+    });
+
     return NextResponse.json(
-      { message: 'Dominio rimosso con successo' },
+      { message: `Dominio rimosso con successo${vercelMessage}` },
       { status: 200 }
     );
 
@@ -105,11 +126,30 @@ export async function PUT(
     }
 
     domain.isActive = isActive;
+    
+    // Se il dominio viene disattivato, rimuovilo da Vercel
+    let vercelMessage = '';
+    if (!isActive && vercelApi.isConfigured() && domain.vercelDomainId) {
+      try {
+        await vercelApi.removeDomain(domain.domain);
+        domain.vercelDomainId = null;
+        domain.vercelStatus = 'removed';
+        domain.vercelError = null;
+        vercelMessage = ' e rimosso da Vercel';
+        console.log(`Domain ${domain.domain} removed from Vercel due to deactivation`);
+      } catch (vercelError: any) {
+        console.error('Error removing domain from Vercel:', vercelError);
+        domain.vercelStatus = 'error';
+        domain.vercelError = vercelError.message;
+        vercelMessage = ' (errore nella rimozione da Vercel)';
+      }
+    }
+    
     await domain.save();
 
     return NextResponse.json(
       { 
-        message: isActive ? 'Dominio attivato' : 'Dominio disattivato',
+        message: `${isActive ? 'Dominio attivato' : 'Dominio disattivato'}${vercelMessage}`,
         domain 
       },
       { status: 200 }
