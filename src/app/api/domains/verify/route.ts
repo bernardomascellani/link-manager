@@ -73,13 +73,23 @@ export async function POST(request: NextRequest) {
 
         // Aggiungi automaticamente il dominio a Vercel se configurato
         let vercelMessage = '';
+        console.log('=== DOMAIN VERIFICATION DEBUG ===');
+        console.log('Domain:', domain.domain);
+        console.log('Vercel configured:', vercelApi.isConfigured());
+        console.log('Domain before Vercel:', JSON.stringify(domain, null, 2));
+        
         if (vercelApi.isConfigured()) {
           try {
+            console.log(`Attempting to add domain ${domain.domain} to Vercel...`);
             const vercelResponse = await vercelApi.addDomain(domain.domain);
-            domain.vercelDomainId = vercelResponse.id;
-            domain.vercelStatus = vercelResponse.status;
+            console.log('Vercel response:', JSON.stringify(vercelResponse, null, 2));
+            
+            domain.vercelDomainId = vercelResponse.name; // Usa name invece di id
+            domain.vercelStatus = vercelResponse.verified ? 'verified' : 'pending';
             domain.vercelError = null;
             await domain.save();
+            
+            console.log('Domain after Vercel save:', JSON.stringify(domain, null, 2));
             vercelMessage = ' e aggiunto a Vercel';
           } catch (vercelError: any) {
             console.error('Error adding domain to Vercel:', vercelError);
@@ -88,6 +98,8 @@ export async function POST(request: NextRequest) {
             await domain.save();
             vercelMessage = ' (errore nell\'aggiunta a Vercel)';
           }
+        } else {
+          console.log('Vercel API not configured, skipping Vercel addition');
         }
 
         return NextResponse.json(

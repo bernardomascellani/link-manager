@@ -26,8 +26,6 @@ export default function DominiPage() {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newDomain, setNewDomain] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [showDNSInstructions, setShowDNSInstructions] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
   const [showVerificationStatus, setShowVerificationStatus] = useState(false);
@@ -65,11 +63,9 @@ export default function DominiPage() {
 
   const handleAddDomain = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
 
     if (!newDomain.trim()) {
-      setError('Inserisci un dominio valido');
+      handleShowToast('Inserisci un dominio valido', 'error');
       return;
     }
 
@@ -77,7 +73,7 @@ export default function DominiPage() {
     const normalizedDomain = normalizeDomain(newDomain.trim());
     
     if (!normalizedDomain) {
-      setError('Dominio non valido. Inserisci un dominio valido (es. esempio.com)');
+      handleShowToast('Dominio non valido. Inserisci un dominio valido (es. esempio.com)', 'error');
       return;
     }
 
@@ -93,15 +89,15 @@ export default function DominiPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setSuccess('Dominio aggiunto con successo!');
+        handleShowToast('Dominio aggiunto con successo!', 'success');
         setNewDomain('');
         setShowAddModal(false);
         fetchDomains();
       } else {
-        setError(data.error);
+        handleShowToast(data.error, 'error');
       }
     } catch {
-      setError('Errore nell\'aggiunta del dominio');
+      handleShowToast('Errore nell\'aggiunta del dominio', 'error');
     }
   };
 
@@ -123,14 +119,17 @@ export default function DominiPage() {
         method: 'DELETE',
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        setSuccess('Dominio rimosso con successo!');
+        handleShowToast('Dominio rimosso con successo', 'error');
         fetchDomains();
       } else {
-        setError('Errore nella rimozione del dominio');
+        handleShowToast(data.error || 'Errore nella rimozione del dominio', 'error');
       }
-    } catch {
-      setError('Errore nella rimozione del dominio');
+    } catch (error) {
+      console.error('Delete domain error:', error);
+      handleShowToast('Errore nella rimozione del dominio', 'error');
     }
   };
 
@@ -144,15 +143,16 @@ export default function DominiPage() {
         body: JSON.stringify({ isActive: !isActive }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        setSuccess(isActive ? 'Dominio disattivato' : 'Dominio attivato');
+        handleShowToast(data.message || (isActive ? 'Dominio disattivato' : 'Dominio attivato'), 'success');
         fetchDomains();
       } else {
-        const data = await response.json();
-        setError(data.error);
+        handleShowToast(data.error || 'Errore nell\'aggiornamento del dominio', 'error');
       }
     } catch {
-      setError('Errore nell\'aggiornamento del dominio');
+      handleShowToast('Errore nell\'aggiornamento del dominio', 'error');
     }
   };
 
@@ -199,22 +199,7 @@ export default function DominiPage() {
         </div>
       </div>
 
-      {/* Messages */}
-      {error && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
-            {error}
-          </div>
-        </div>
-      )}
 
-      {success && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-md">
-            {success}
-          </div>
-        </div>
-      )}
 
       {/* Domains List */}
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -289,16 +274,24 @@ export default function DominiPage() {
                           </>
                         )}
                         {domain.isVerified && (
-                          <button
-                            onClick={() => handleToggleActive(domain._id, domain.isActive)}
-                            className={`px-3 py-1 rounded text-sm font-medium ${
-                              domain.isActive 
-                                ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
-                                : 'bg-green-600 hover:bg-green-700 text-white'
-                            }`}
-                          >
-                            {domain.isActive ? 'Disattiva' : 'Attiva'}
-                          </button>
+                          <>
+                            <Link
+                              href="/links"
+                              className="bg-green-700 hover:bg-green-800 text-white px-3 py-1 rounded text-sm font-medium"
+                            >
+                              Crea Link
+                            </Link>
+                            <button
+                              onClick={() => handleToggleActive(domain._id, domain.isActive)}
+                              className={`px-3 py-1 rounded text-sm font-medium ${
+                                domain.isActive 
+                                  ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
+                                  : 'bg-green-600 hover:bg-green-700 text-white'
+                              }`}
+                            >
+                              {domain.isActive ? 'Disattiva' : 'Attiva'}
+                            </button>
+                          </>
                         )}
                         <button
                           onClick={() => handleDeleteDomain(domain._id)}

@@ -21,7 +21,11 @@ export async function DELETE(
     }
 
     const { id } = await params;
-
+    
+    console.log('=== DOMAIN ID DEBUG ===');
+    console.log('Received domain ID:', id);
+    console.log('Domain ID type:', typeof id);
+    
     if (!id) {
       return NextResponse.json(
         { error: 'ID dominio richiesto' },
@@ -46,9 +50,20 @@ export async function DELETE(
 
     // Rimuovi il dominio da Vercel se è configurato e il dominio è in Vercel
     let vercelMessage = '';
+    console.log('=== DOMAIN DELETION DEBUG ===');
+    console.log('Domain:', domain.domain);
+    console.log('Vercel configured:', vercelApi.isConfigured());
+    console.log('Vercel domain ID:', domain.vercelDomainId);
+    console.log('Vercel domain ID type:', typeof domain.vercelDomainId);
+    console.log('Vercel domain ID is null:', domain.vercelDomainId === null);
+    console.log('Vercel domain ID is undefined:', domain.vercelDomainId === undefined);
+    console.log('Vercel status:', domain.vercelStatus);
+    console.log('Full domain object:', JSON.stringify(domain, null, 2));
+    
     if (vercelApi.isConfigured() && domain.vercelDomainId) {
       try {
-        await vercelApi.removeDomain(domain.domain);
+        console.log(`Attempting to remove domain ${domain.vercelDomainId} from Vercel...`);
+        await vercelApi.removeDomain(domain.vercelDomainId);
         vercelMessage = ' e rimosso da Vercel';
         console.log(`Domain ${domain.domain} removed from Vercel successfully`);
       } catch (vercelError: any) {
@@ -56,6 +71,8 @@ export async function DELETE(
         // Non bloccare l'eliminazione se Vercel fallisce
         vercelMessage = ' (errore nella rimozione da Vercel)';
       }
+    } else {
+      console.log('Domain not removed from Vercel - either not configured or not in Vercel');
     }
 
     // Elimina il dominio dal database
@@ -131,7 +148,7 @@ export async function PUT(
     let vercelMessage = '';
     if (!isActive && vercelApi.isConfigured() && domain.vercelDomainId) {
       try {
-        await vercelApi.removeDomain(domain.domain);
+        await vercelApi.removeDomain(domain.vercelDomainId);
         domain.vercelDomainId = null;
         domain.vercelStatus = 'removed';
         domain.vercelError = null;

@@ -126,6 +126,12 @@ export default function DNSInstructions({ domain, verificationToken, onClose }: 
                     Valore Record:
                   </label>
                   <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      value="link-manager-psi.vercel.app"
+                      readOnly
+                      className="flex-1 px-3 py-2 bg-white border border-green-300 rounded-md text-sm font-mono text-gray-900"
+                    />
                     <button
                       onClick={() => copyToClipboard('link-manager-psi.vercel.app', 'cname-value')}
                       className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md text-sm font-medium"

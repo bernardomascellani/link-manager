@@ -88,6 +88,11 @@ export async function POST(request: NextRequest) {
     const verificationToken = crypto.randomBytes(32).toString('hex');
 
     // Crea nuovo dominio
+    console.log('=== DOMAIN CREATION DEBUG ===');
+    console.log('Creating domain:', normalizedDomain);
+    console.log('User ID:', session.user.id);
+    console.log('Verification token:', verificationToken);
+    
     const newDomain = await Domain.create({
       userId: session.user.id,
       domain: normalizedDomain,
@@ -95,6 +100,8 @@ export async function POST(request: NextRequest) {
       isVerified: false,
       isActive: false,
     });
+
+    console.log('Domain created successfully:', JSON.stringify(newDomain, null, 2));
 
     return NextResponse.json(
       { 
