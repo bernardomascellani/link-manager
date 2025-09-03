@@ -8,6 +8,7 @@ interface DomainVerificationStatusProps {
   domainId: string;
   onClose: () => void;
   onVerificationSuccess?: () => void;
+  onShowToast?: (message: string, type: 'success' | 'error' | 'info' | 'warning') => void;
 }
 
 interface VerificationResult {
@@ -19,7 +20,7 @@ interface VerificationResult {
   error?: string;
 }
 
-export default function DomainVerificationStatus({ domain, verificationToken, domainId, onClose, onVerificationSuccess }: DomainVerificationStatusProps) {
+export default function DomainVerificationStatus({ domain, verificationToken, domainId, onClose, onVerificationSuccess, onShowToast }: DomainVerificationStatusProps) {
   const [verificationResults, setVerificationResults] = useState<VerificationResult[]>([]);
   const [isChecking, setIsChecking] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
@@ -54,15 +55,32 @@ export default function DomainVerificationStatus({ domain, verificationToken, do
 
       if (response.ok && data.verified) {
         setVerificationSuccess(true);
+        
+        // Mostra toast di successo
+        if (onShowToast) {
+          onShowToast('Il dominio è collegato, puoi creare i tuoi link ora!', 'success');
+        }
+        
         // Chiama la callback se fornita
         if (onVerificationSuccess) {
           onVerificationSuccess();
         }
+        
+        // Chiudi il modale dopo un breve delay
+        setTimeout(() => {
+          onClose();
+        }, 1000);
       } else {
         console.error('Failed to update domain verification:', data);
+        if (onShowToast) {
+          onShowToast('Errore nella verifica del dominio', 'error');
+        }
       }
     } catch (error) {
       console.error('Error updating domain verification:', error);
+      if (onShowToast) {
+        onShowToast('Errore nella verifica del dominio', 'error');
+      }
     } finally {
       setIsUpdatingDatabase(false);
     }

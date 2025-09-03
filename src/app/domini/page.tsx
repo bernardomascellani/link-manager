@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import DNSInstructions from '@/components/DNSInstructions';
 import DomainVerificationStatus from '@/components/DomainVerificationStatus';
+import Toast from '@/components/Toast';
 import { normalizeDomain } from '@/lib/domain-utils';
 
 interface Domain {
@@ -28,8 +29,17 @@ export default function DominiPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showDNSInstructions, setShowDNSInstructions] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
   const [showVerificationStatus, setShowVerificationStatus] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null);
+
+  const handleShowToast = (message: string, type: 'success' | 'error' | 'info' | 'warning') => {
+    setToast({ message, type });
+  };
+
+  const handleCloseToast = () => {
+    setToast(null);
+  };
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -386,6 +396,17 @@ export default function DominiPage() {
             // Ricarica i domini quando la verifica ha successo
             fetchDomains();
           }}
+          onShowToast={handleShowToast}
+        />
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          duration={3000}
+          onClose={handleCloseToast}
         />
       )}
     </div>
