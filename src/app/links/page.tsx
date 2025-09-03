@@ -74,7 +74,16 @@ export default function LinksPage() {
 
       if (domainsResponse.ok) {
         const domainsData = await domainsResponse.json();
-        setDomains(domainsData.domains.filter((d: Domain) => d.isActive));
+        const activeDomains = domainsData.domains.filter((d: Domain) => d.isActive);
+        setDomains(activeDomains);
+        
+        // Imposta l'ultimo dominio come predefinito se non c'è già un dominio selezionato
+        if (activeDomains.length > 0 && !formData.domainId) {
+          setFormData(prev => ({
+            ...prev,
+            domainId: activeDomains[activeDomains.length - 1]._id
+          }));
+        }
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -103,6 +112,18 @@ export default function LinksPage() {
     const newTargetUrls = [...formData.targetUrls];
     newTargetUrls[index] = { ...newTargetUrls[index], [field]: value };
     setFormData({ ...formData, targetUrls: newTargetUrls });
+  };
+
+  const handleAddLink = () => {
+    // Imposta l'ultimo dominio come predefinito se disponibile
+    const defaultDomainId = domains.length > 0 ? domains[domains.length - 1]._id : '';
+    
+    setFormData({
+      domainId: defaultDomainId,
+      shortPath: '',
+      targetUrls: [{ url: '', weight: 1, isActive: true }]
+    });
+    setShowAddModal(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -228,7 +249,7 @@ export default function LinksPage() {
                 Domini
               </Link>
               <button
-                onClick={() => setShowAddModal(true)}
+                onClick={handleAddLink}
                 disabled={domains.length === 0}
                 className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium"
               >
@@ -288,7 +309,7 @@ export default function LinksPage() {
               <p className="mt-1 text-sm text-gray-500">Inizia creando il tuo primo short link.</p>
               <div className="mt-6">
                 <button
-                  onClick={() => setShowAddModal(true)}
+                  onClick={handleAddLink}
                   className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
                 >
                   Crea Link
