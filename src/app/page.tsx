@@ -35,6 +35,14 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center justify-center min-h-screen text-center">
           <div className="max-w-3xl">
+            {/* Logo */}
+            <div className="mb-8">
+              <img
+                src="/linkotto_logo.svg"
+                alt="Linkotto"
+                className="h-16 w-auto mx-auto"
+              />
+            </div>
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
               Gestisci i tuoi{' '}
               <span className="text-indigo-600">shortlink</span>

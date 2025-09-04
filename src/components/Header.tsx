@@ -53,13 +53,10 @@ export default function Header() {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/dashboard" className="flex items-center">
-              <Image
-                src="/logo_linkotto.png"
+              <img
+                src="/linkotto_logo.svg"
                 alt="Linkotto"
-                width={120}
-                height={32}
                 className="h-8 w-auto"
-                priority
               />
             </Link>
           </div>
