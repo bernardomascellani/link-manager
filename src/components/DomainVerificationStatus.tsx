@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { isRootDomain, getDnsRecordType, getVercelIpAddress, getVercelCnameTarget } from '@/lib/domainUtils';
 
 interface DomainVerificationStatusProps {
   domain: string;
@@ -12,7 +13,7 @@ interface DomainVerificationStatusProps {
 }
 
 interface VerificationResult {
-  type: 'TXT' | 'CNAME';
+  type: 'TXT' | 'A' | 'CNAME';
   name: string;
   expectedValue: string;
   status: 'checking' | 'found' | 'not-found' | 'error';
@@ -29,6 +30,10 @@ export default function DomainVerificationStatus({ domain, verificationToken, do
 
   const txtRecordName = `_linkmanager-verify.${domain}`;
   const txtRecordValue = `linkmanager-verify=${verificationToken}`;
+  const isRoot = isRootDomain(domain);
+  const dnsRecordType = getDnsRecordType(domain);
+  const vercelIp = getVercelIpAddress();
+  const vercelCname = getVercelCnameTarget();
 
   const copyToClipboard = async (text: string, type: string) => {
     try {
@@ -99,9 +104,9 @@ export default function DomainVerificationStatus({ domain, verificationToken, do
         status: 'checking'
       },
       {
-        type: 'CNAME',
+        type: dnsRecordType,
         name: domain,
-        expectedValue: 'link-manager-psi.vercel.app',
+        expectedValue: isRoot ? vercelIp : vercelCname,
         status: 'checking'
       }
     ];
@@ -130,24 +135,24 @@ export default function DomainVerificationStatus({ domain, verificationToken, do
 
       setVerificationResults([...results]);
 
-      // Verifica CNAME record
-      const cnameResponse = await fetch('/api/domains/verify-dns', {
+      // Verifica record di routing (A o CNAME)
+      const routingResponse = await fetch('/api/domains/verify-dns', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          type: 'CNAME',
+          type: dnsRecordType,
           name: domain,
-          expectedValue: 'link-manager-psi.vercel.app'
+          expectedValue: isRoot ? vercelIp : vercelCname
         }),
       });
 
-      const cnameData = await cnameResponse.json();
+      const routingData = await routingResponse.json();
       
-      results[1].status = cnameData.found ? 'found' : 'not-found';
-      results[1].actualValue = cnameData.actualValue;
-      results[1].error = cnameData.error;
+      results[1].status = routingData.found ? 'found' : 'not-found';
+      results[1].actualValue = routingData.actualValue;
+      results[1].error = routingData.error;
 
       setVerificationResults([...results]);
 
