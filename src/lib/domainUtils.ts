@@ -26,7 +26,7 @@ export function getDnsRecordType(domain: string): 'A' | 'CNAME' {
  * @returns The Vercel IP address
  */
 export function getVercelIpAddress(): string {
-  return '76.76.19.0';
+  return '216.198.79.1';
 }
 
 /**
