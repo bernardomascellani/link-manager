@@ -362,27 +362,13 @@ export default function LinksPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Page Header */}
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Gestione Link</h1>
-              <p className="text-gray-600">Crea e gestisci i tuoi short link</p>
-            </div>
-            <div className="flex space-x-4">
-              <Link
-                href="/dashboard"
-                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/domini"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Domini
-              </Link>
+          <div className="py-6">
+            <h1 className="text-2xl font-bold text-gray-900">Gestione Link</h1>
+            <p className="text-gray-600">Crea e gestisci i tuoi short link</p>
+            <div className="mt-4 flex flex-wrap gap-2">
               <button
                 onClick={() => setShowImportModal(true)}
                 disabled={domains.length === 0}

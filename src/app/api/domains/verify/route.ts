@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import Domain from '@/models/Domain';
 import { promises as dns } from 'dns';
 import { vercelApi } from '@/lib/vercel-api';
+import { isRootDomain, getDnsRecordType, getVercelIpAddress, getVercelCnameTarget } from '@/lib/domainUtils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -53,18 +54,35 @@ export async function POST(request: NextRequest) {
         record.some(txt => txt === expectedTxtValue)
       );
 
-      // Verifica CNAME record
-      const expectedCnameValue = 'link-manager-psi.vercel.app';
-      let cnameFound = false;
+      // Verifica record di routing (A o CNAME)
+      const isRoot = isRootDomain(domain.domain);
+      const dnsRecordType = getDnsRecordType(domain.domain);
+      const expectedIpValue = getVercelIpAddress();
+      const expectedCnameValue = getVercelCnameTarget();
       
-      try {
-        const cnameRecords = await dns.resolveCname(domain.domain);
-        cnameFound = cnameRecords.length > 0 && cnameRecords[0] === expectedCnameValue;
-      } catch (cnameError) {
-        console.log('CNAME not found or error:', cnameError);
+      let routingFound = false;
+      
+      if (isRoot) {
+        // Per domini primari, verifica record A
+        try {
+          const aRecords = await dns.resolve4(domain.domain);
+          routingFound = aRecords.some(ip => ip === expectedIpValue);
+          console.log(`A record check for ${domain.domain}:`, { aRecords, expectedIpValue, routingFound });
+        } catch (aError) {
+          console.log('A record not found or error:', aError);
+        }
+      } else {
+        // Per sottodomini, verifica CNAME
+        try {
+          const cnameRecords = await dns.resolveCname(domain.domain);
+          routingFound = cnameRecords.length > 0 && cnameRecords[0] === expectedCnameValue;
+          console.log(`CNAME record check for ${domain.domain}:`, { cnameRecords, expectedCnameValue, routingFound });
+        } catch (cnameError) {
+          console.log('CNAME not found or error:', cnameError);
+        }
       }
 
-      if (txtFound && cnameFound) {
+      if (txtFound && routingFound) {
         // Entrambi i record sono verificati - attiva il dominio
         domain.isVerified = true;
         domain.isActive = true;
@@ -115,15 +133,18 @@ export async function POST(request: NextRequest) {
         // Solo TXT verificato
         return NextResponse.json(
           { 
-            message: 'Record TXT verificato, ma CNAME mancante o incorretto',
+            message: `Record TXT verificato, ma ${dnsRecordType} mancante o incorretto`,
             verified: false,
             txtVerified: true,
-            cnameVerified: false,
+            routingVerified: false,
+            isRootDomain: isRoot,
+            dnsRecordType,
             instructions: {
               txtRecordName,
               txtRecordValue: expectedTxtValue,
-              cnameRecordName: domain.domain,
-              cnameRecordValue: expectedCnameValue
+              routingRecordName: domain.domain,
+              routingRecordType: dnsRecordType,
+              routingRecordValue: isRoot ? expectedIpValue : expectedCnameValue
             }
           },
           { status: 200 }
@@ -135,12 +156,15 @@ export async function POST(request: NextRequest) {
             message: 'Record DNS non trovati o non corretti',
             verified: false,
             txtVerified: false,
-            cnameVerified: false,
+            routingVerified: false,
+            isRootDomain: isRoot,
+            dnsRecordType,
             instructions: {
               txtRecordName,
               txtRecordValue: expectedTxtValue,
-              cnameRecordName: domain.domain,
-              cnameRecordValue: expectedCnameValue
+              routingRecordName: domain.domain,
+              routingRecordType: dnsRecordType,
+              routingRecordValue: isRoot ? expectedIpValue : expectedCnameValue
             }
           },
           { status: 200 }

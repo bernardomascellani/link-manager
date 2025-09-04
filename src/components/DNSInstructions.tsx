@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { isRootDomain, getDnsRecordType, getVercelIpAddress, getVercelCnameTarget } from '@/lib/domainUtils';
 
 interface DNSInstructionsProps {
   domain: string;
@@ -13,6 +14,10 @@ export default function DNSInstructions({ domain, verificationToken, onClose }: 
 
   const recordName = `_linkmanager-verify.${domain}`;
   const recordValue = `linkmanager-verify=${verificationToken}`;
+  const isRoot = isRootDomain(domain);
+  const dnsRecordType = getDnsRecordType(domain);
+  const vercelIp = getVercelIpAddress();
+  const vercelCname = getVercelCnameTarget();
 
   const copyToClipboard = async (text: string, type: string) => {
     try {
@@ -95,9 +100,21 @@ export default function DNSInstructions({ domain, verificationToken, onClose }: 
 
             {/* Step 2 */}
             <div className="bg-green-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-green-900 mb-2">Passo 2: Configura CNAME (Obbligatorio)</h4>
+              <h4 className="font-semibold text-green-900 mb-2">
+                Passo 2: Configura {dnsRecordType} (Obbligatorio)
+                {isRoot && (
+                  <span className="ml-2 text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">
+                    DOMINIO PRIMARIO
+                  </span>
+                )}
+              </h4>
               <p className="text-green-800 text-sm mb-3">
-                <strong>IMPORTANTE:</strong> Senza questo record CNAME, il traffico non può arrivare alla piattaforma. Aggiungi questo record CNAME:
+                <strong>IMPORTANTE:</strong> Senza questo record {dnsRecordType}, il traffico non può arrivare alla piattaforma. 
+                {isRoot ? (
+                  <> Per i domini primari (come <code className="bg-yellow-100 px-1 rounded">{domain}</code>) devi usare un record <strong>A</strong> invece di CNAME.</>
+                ) : (
+                  <> Aggiungi questo record {dnsRecordType}:</>
+                )}
               </p>
               
               <div className="space-y-3">
@@ -113,10 +130,30 @@ export default function DNSInstructions({ domain, verificationToken, onClose }: 
                       className="flex-1 px-3 py-2 bg-white border border-green-300 rounded-md text-sm font-mono text-gray-900"
                     />
                     <button
-                      onClick={() => copyToClipboard(domain, 'cname-name')}
+                      onClick={() => copyToClipboard(domain, 'record-name')}
                       className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md text-sm font-medium"
                     >
-                      {copied === 'cname-name' ? 'Copiato!' : 'Copia'}
+                      {copied === 'record-name' ? 'Copiato!' : 'Copia'}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-green-900 mb-1">
+                    Tipo Record:
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      value={dnsRecordType}
+                      readOnly
+                      className="flex-1 px-3 py-2 bg-white border border-green-300 rounded-md text-sm font-mono text-gray-900 font-bold"
+                    />
+                    <button
+                      onClick={() => copyToClipboard(dnsRecordType, 'record-type')}
+                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      {copied === 'record-type' ? 'Copiato!' : 'Copia'}
                     </button>
                   </div>
                 </div>
@@ -128,19 +165,28 @@ export default function DNSInstructions({ domain, verificationToken, onClose }: 
                   <div className="flex items-center space-x-2">
                     <input
                       type="text"
-                      value="link-manager-psi.vercel.app"
+                      value={isRoot ? vercelIp : vercelCname}
                       readOnly
                       className="flex-1 px-3 py-2 bg-white border border-green-300 rounded-md text-sm font-mono text-gray-900"
                     />
                     <button
-                      onClick={() => copyToClipboard('link-manager-psi.vercel.app', 'cname-value')}
+                      onClick={() => copyToClipboard(isRoot ? vercelIp : vercelCname, 'record-value')}
                       className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md text-sm font-medium"
                     >
-                      {copied === 'cname-value' ? 'Copiato!' : 'Copia'}
+                      {copied === 'record-value' ? 'Copiato!' : 'Copia'}
                     </button>
                   </div>
                 </div>
               </div>
+
+              {isRoot && (
+                <div className="mt-3 p-3 bg-yellow-100 border border-yellow-300 rounded-md">
+                  <p className="text-yellow-800 text-xs">
+                    <strong>Nota per domini primari:</strong> I record A puntano direttamente all'IP di Vercel. 
+                    Questo è l'unico modo per far funzionare un dominio primario con Vercel.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Step 3 */}

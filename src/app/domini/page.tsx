@@ -173,21 +173,13 @@ export default function DominiPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Page Header */}
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Gestione Domini</h1>
-              <p className="text-gray-600">Collega i tuoi domini personalizzati</p>
-            </div>
-            <div className="flex space-x-4">
-              <Link
-                href="/dashboard"
-                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Dashboard
-              </Link>
+          <div className="py-6">
+            <h1 className="text-2xl font-bold text-gray-900">Gestione Domini</h1>
+            <p className="text-gray-600">Collega i tuoi domini personalizzati</p>
+            <div className="mt-4">
               <button
                 onClick={() => setShowAddModal(true)}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
