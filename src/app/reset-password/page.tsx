@@ -69,7 +69,13 @@ function ResetPasswordContent() {
       if (response.ok) {
         setMessage(data.message);
         setTimeout(() => {
-          router.push('/login');
+          // Redirect al dominio personalizzato se disponibile
+          const customDomain = process.env.NEXT_PUBLIC_CUSTOM_DOMAIN;
+          if (customDomain) {
+            window.location.href = `https://${customDomain}/login`;
+          } else {
+            router.push('/login');
+          }
         }, 2000);
       } else {
         if (data.details && Array.isArray(data.details)) {
@@ -182,12 +188,12 @@ function ResetPasswordContent() {
           </div>
 
           <div className="text-center">
-            <Link
-              href="/login"
+            <a
+              href={process.env.NEXT_PUBLIC_CUSTOM_DOMAIN ? `https://${process.env.NEXT_PUBLIC_CUSTOM_DOMAIN}/login` : "/login"}
               className="font-medium text-indigo-600 hover:text-indigo-500"
             >
               Torna al login
-            </Link>
+            </a>
           </div>
         </form>
       </div>

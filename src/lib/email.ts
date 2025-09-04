@@ -31,7 +31,9 @@ export async function sendEmail({ to, subject, html }: EmailOptions) {
 }
 
 export function generateVerificationEmailHtml(token: string, name: string) {
-  const verificationUrl = `${process.env.APP_URL}/verify-email?token=${token}`;
+  // Usa il dominio personalizzato se disponibile, altrimenti fallback su APP_URL
+  const baseUrl = process.env.CUSTOM_DOMAIN || process.env.APP_URL;
+  const verificationUrl = `${baseUrl}/verify-email?token=${token}`;
   
   return `
     <!DOCTYPE html>
@@ -80,7 +82,9 @@ export function generateVerificationEmailHtml(token: string, name: string) {
 }
 
 export function generateResetPasswordEmailHtml(token: string, name: string) {
-  const resetUrl = `${process.env.APP_URL}/reset-password?token=${token}`;
+  // Usa il dominio personalizzato se disponibile, altrimenti fallback su APP_URL
+  const baseUrl = process.env.CUSTOM_DOMAIN || process.env.APP_URL;
+  const resetUrl = `${baseUrl}/reset-password?token=${token}`;
   
   return `
     <!DOCTYPE html>
