@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { validatePassword, getPasswordStrengthColor, getPasswordStrengthText } from '@/lib/passwordValidation';
 
 function ResetPasswordContent() {
   const [password, setPassword] = useState('');
@@ -11,6 +12,11 @@ function ResetPasswordContent() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [token, setToken] = useState('');
+  const [passwordValidation, setPasswordValidation] = useState({
+    isValid: false,
+    errors: [] as string[],
+    strength: 'weak' as 'weak' | 'medium' | 'strong'
+  });
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -23,6 +29,15 @@ function ResetPasswordContent() {
     }
   }, [searchParams]);
 
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+    
+    // Validazione password in tempo reale
+    const validation = validatePassword(newPassword);
+    setPasswordValidation(validation);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -33,8 +48,8 @@ function ResetPasswordContent() {
       return;
     }
 
-    if (password.length < 6) {
-      setError('La password deve essere di almeno 6 caratteri');
+    if (!passwordValidation.isValid) {
+      setError('La password non soddisfa i requisiti di sicurezza');
       return;
     }
 
@@ -57,7 +72,11 @@ function ResetPasswordContent() {
           router.push('/login');
         }, 2000);
       } else {
-        setError(data.error);
+        if (data.details && Array.isArray(data.details)) {
+          setError(`Password non valida: ${data.details.join(', ')}`);
+        } else {
+          setError(data.error);
+        }
       }
     } catch {
       setError('Errore durante il reset della password');
@@ -102,8 +121,30 @@ function ResetPasswordContent() {
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 placeholder="Scegli una nuova password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handlePasswordChange}
               />
+              {password && (
+                <div className="mt-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs text-gray-500">Forza:</span>
+                    <span className={`text-xs font-medium ${getPasswordStrengthColor(passwordValidation.strength)}`}>
+                      {getPasswordStrengthText(passwordValidation.strength)}
+                    </span>
+                  </div>
+                  {passwordValidation.errors.length > 0 && (
+                    <div className="mt-1">
+                      <ul className="text-xs text-red-600 space-y-1">
+                        {passwordValidation.errors.map((error, index) => (
+                          <li key={index} className="flex items-center">
+                            <span className="mr-1">•</span>
+                            {error}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">

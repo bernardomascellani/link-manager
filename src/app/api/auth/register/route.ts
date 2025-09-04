@@ -4,6 +4,7 @@ import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import crypto from 'crypto';
 import { sendEmail, generateVerificationEmailHtml } from '@/lib/email';
+import { validatePassword } from '@/lib/passwordValidation';
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,9 +18,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (password.length < 6) {
+    // Validazione password robusta
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
       return NextResponse.json(
-        { error: 'La password deve essere di almeno 6 caratteri' },
+        { 
+          error: 'Password non valida',
+          details: passwordValidation.errors 
+        },
         { status: 400 }
       );
     }

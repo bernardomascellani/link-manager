@@ -4,6 +4,8 @@ import connectDB from '@/lib/mongodb';
 import Link from '@/models/Link';
 import Domain from '@/models/Domain';
 import Click from '@/models/Click';
+import { domainCache } from '@/lib/domainCache';
+import { linkCache } from '@/lib/linkCache';
 
 interface RedirectPageProps {
   params: Promise<{
@@ -33,18 +35,33 @@ export default async function RedirectPage({ params }: RedirectPageProps) {
       redirect('/');
     }
 
-    await connectDB();
-
     console.log('=== REDIRECT DEBUG ===');
     console.log('Host header:', host);
     console.log('Domain extracted:', domain);
     console.log('Short path:', shortPath);
 
-    // Trova il dominio nel database
-    const domainRecord = await Domain.findOne({ 
-      domain: domain,
-      isActive: true 
-    });
+    // Controlla prima la cache per il dominio
+    let domainRecord = domainCache.get(domain);
+    
+    if (!domainRecord) {
+      // Se non in cache, cerca nel database
+      await connectDB();
+      const dbDomain = await Domain.findOne({ 
+        domain: domain,
+        isActive: true 
+      });
+      
+      if (dbDomain) {
+        domainCache.set(domain, dbDomain);
+        domainRecord = {
+          _id: dbDomain._id.toString(),
+          domain: dbDomain.domain,
+          isActive: dbDomain.isActive,
+          isVerified: dbDomain.isVerified,
+          lastUpdated: Date.now()
+        };
+      }
+    }
 
     console.log('Domain record found:', domainRecord ? 'YES' : 'NO');
     if (domainRecord) {
@@ -66,11 +83,29 @@ export default async function RedirectPage({ params }: RedirectPageProps) {
       );
     }
 
-    // Trova il link nel database
-    const link = await Link.findOne({
-      domainId: domainRecord._id,
-      shortPath: shortPath
-    });
+    // Controlla prima la cache per il link
+    let link = linkCache.get(domainRecord._id, shortPath);
+    
+    if (!link) {
+      // Se non in cache, cerca nel database
+      await connectDB();
+      const dbLink = await Link.findOne({
+        domainId: domainRecord._id,
+        shortPath: shortPath
+      });
+      
+      if (dbLink) {
+        linkCache.set(domainRecord._id, shortPath, dbLink);
+        link = {
+          _id: dbLink._id.toString(),
+          domainId: domainRecord._id,
+          shortPath: shortPath,
+          targetUrls: dbLink.targetUrls,
+          totalClicks: dbLink.totalClicks,
+          lastUpdated: Date.now()
+        };
+      }
+    }
 
     console.log('Link found:', link ? 'YES' : 'NO');
     if (link) {
@@ -120,26 +155,38 @@ export default async function RedirectPage({ params }: RedirectPageProps) {
     const realIp = headersList.get('x-real-ip');
     const ip = forwardedFor?.split(',')[0] || realIp || 'Unknown';
 
-    // Salva il click nel database
-    try {
-      await Click.create({
-        linkId: link._id,
-        domainId: domainRecord._id,
-        targetUrl: selectedUrl.url,
-        ip: ip,
-        userAgent: userAgent,
-        referer: referer,
-      });
-      console.log('Click saved successfully');
-    } catch (clickError) {
-      console.error('Error saving click:', clickError);
-      // Non bloccare il redirect se il salvataggio del click fallisce
-    }
+    // Aggiorna la cache immediatamente per velocità
+    linkCache.updateClickCount(domainRecord._id, shortPath);
 
-    // Aggiorna le statistiche del link
-    await Link.findByIdAndUpdate(link._id, {
-      $inc: { totalClicks: 1 },
-      lastUsed: new Date()
+    // Salva il click nel database in modo asincrono (non blocca il redirect)
+    setImmediate(async () => {
+      try {
+        await connectDB();
+        await Click.create({
+          linkId: link._id,
+          domainId: domainRecord._id,
+          targetUrl: selectedUrl.url,
+          ip: ip,
+          userAgent: userAgent,
+          referer: referer,
+        });
+        console.log('Click saved successfully');
+      } catch (clickError) {
+        console.error('Error saving click:', clickError);
+      }
+    });
+
+    // Aggiorna le statistiche del link in modo asincrono
+    setImmediate(async () => {
+      try {
+        await connectDB();
+        await Link.findByIdAndUpdate(link._id, {
+          $inc: { totalClicks: 1 },
+          lastUsed: new Date()
+        });
+      } catch (updateError) {
+        console.error('Error updating link stats:', updateError);
+      }
     });
 
     // Reindirizza all'URL selezionato

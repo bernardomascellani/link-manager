@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { validatePassword, getPasswordStrengthColor, getPasswordStrengthText } from '@/lib/passwordValidation';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -15,6 +16,11 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [passwordValidation, setPasswordValidation] = useState({
+    isValid: false,
+    errors: [] as string[],
+    strength: 'weak' as 'weak' | 'medium' | 'strong'
+  });
   const router = useRouter();
   const { data: session, status } = useSession();
 
@@ -26,10 +32,17 @@ export default function RegisterPage() {
   }, [status, session, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
+    const newFormData = {
       ...formData,
       [e.target.name]: e.target.value,
-    });
+    };
+    setFormData(newFormData);
+    
+    // Validazione password in tempo reale
+    if (e.target.name === 'password') {
+      const validation = validatePassword(e.target.value);
+      setPasswordValidation(validation);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,8 +56,8 @@ export default function RegisterPage() {
       return;
     }
 
-    if (formData.password.length < 6) {
-      setError('La password deve essere di almeno 6 caratteri');
+    if (!passwordValidation.isValid) {
+      setError('La password non soddisfa i requisiti di sicurezza');
       return;
     }
 
@@ -69,7 +82,11 @@ export default function RegisterPage() {
         setSuccess(data.message);
         setFormData({ name: '', email: '', password: '', confirmPassword: '' });
       } else {
-        setError(data.error);
+        if (data.details && Array.isArray(data.details)) {
+          setError(`Password non valida: ${data.details.join(', ')}`);
+        } else {
+          setError(data.error);
+        }
       }
     } catch {
       setError('Errore durante la registrazione');
@@ -159,6 +176,28 @@ export default function RegisterPage() {
                 value={formData.password}
                 onChange={handleChange}
               />
+              {formData.password && (
+                <div className="mt-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs text-gray-500">Forza:</span>
+                    <span className={`text-xs font-medium ${getPasswordStrengthColor(passwordValidation.strength)}`}>
+                      {getPasswordStrengthText(passwordValidation.strength)}
+                    </span>
+                  </div>
+                  {passwordValidation.errors.length > 0 && (
+                    <div className="mt-1">
+                      <ul className="text-xs text-red-600 space-y-1">
+                        {passwordValidation.errors.map((error, index) => (
+                          <li key={index} className="flex items-center">
+                            <span className="mr-1">•</span>
+                            {error}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
