@@ -103,6 +103,32 @@ export async function POST(request: NextRequest) {
           });
         }
 
+      } else if (type === 'A') {
+        // Verifica record A
+        console.log('=== DEBUG A RECORD ===');
+        console.log('Name:', name);
+        console.log('Expected IP:', expectedValue);
+        
+        const aRecords = await dns.resolve4(name);
+        console.log('Found A records:', aRecords);
+        
+        if (aRecords.length > 0) {
+          const actualValue = aRecords[0];
+          const isCorrect = actualValue === expectedValue;
+          
+          return NextResponse.json({
+            found: isCorrect,
+            actualValue: actualValue,
+            message: isCorrect ? 'Record A trovato correttamente' : 'Record A trovato ma con IP diverso'
+          });
+        } else {
+          return NextResponse.json({
+            found: false,
+            actualValue: 'Nessun record A trovato',
+            message: 'Record A non trovato'
+          });
+        }
+
       } else {
         return NextResponse.json(
           { error: 'Tipo di record non supportato' },
