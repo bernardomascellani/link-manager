@@ -12,6 +12,7 @@ function ResetPasswordContent() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [token, setToken] = useState('');
+  const [checkingToken, setCheckingToken] = useState(false);
   const [passwordValidation, setPasswordValidation] = useState({
     isValid: false,
     errors: [] as string[],
@@ -23,17 +24,48 @@ function ResetPasswordContent() {
   useEffect(() => {
     const tokenParam = searchParams.get('token');
     if (tokenParam) {
-      setToken(tokenParam);
+      // Verifica se il token è valido
+      checkTokenValidity(tokenParam);
     } else {
       // Se non c'è token, reindirizza immediatamente a login
-      const customDomain = process.env.NEXT_PUBLIC_CUSTOM_DOMAIN;
-      if (customDomain) {
-        window.location.href = `https://${customDomain}/login`;
-      } else {
-        router.push('/login');
-      }
+      redirectToLogin();
     }
   }, [searchParams, router]);
+
+  const redirectToLogin = () => {
+    const customDomain = process.env.NEXT_PUBLIC_CUSTOM_DOMAIN;
+    if (customDomain) {
+      window.location.href = `https://${customDomain}/login`;
+    } else {
+      router.push('/login');
+    }
+  };
+
+  const checkTokenValidity = async (token: string) => {
+    setCheckingToken(true);
+    try {
+      const response = await fetch('/api/auth/check-reset-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+      });
+
+      if (response.ok) {
+        setToken(token);
+      } else {
+        // Token non valido o scaduto, reindirizza a login
+        redirectToLogin();
+      }
+    } catch (error) {
+      console.error('Error checking token validity:', error);
+      // In caso di errore, reindirizza a login
+      redirectToLogin();
+    } finally {
+      setCheckingToken(false);
+    }
+  };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPassword = e.target.value;
@@ -108,13 +140,15 @@ function ResetPasswordContent() {
     }
   };
 
-  if (!token) {
-    // Se non c'è token, mostra loading mentre reindirizza
+  if (!token || checkingToken) {
+    // Se non c'è token o sta verificando, mostra loading
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Reindirizzamento...</p>
+          <p className="mt-4 text-gray-600">
+            {checkingToken ? 'Verifica token...' : 'Reindirizzamento...'}
+          </p>
         </div>
       </div>
     );
